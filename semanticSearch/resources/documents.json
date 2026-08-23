@@ -1,0 +1,42 @@
+{"documents" : [
+    {
+        "id": 1,
+        "text": "Jira issues are considered overdue when their due date has passed."
+    },
+    {
+        "id": 2,
+        "text": "A sprint is a fixed period during which a team works on planned issues."
+    },
+    {
+        "id": 3,
+        "text": "A Jira board displays issues and their current workflow status."
+    },
+    {
+        "id": 4,
+        "text": "GitHub pull requests are used to review code before merging."
+    },
+    {
+        "id": 5,
+        "text": "Jira provides native support for complex Scrum and Kanban boards."
+    },
+    {
+        "id": 6,
+        "text": "Developers can advance a Jira issue status (e.g., from 'In Progress' to 'Done') simply by typing the issue key and a command (like PROJ-123 #comment done) inside a GitHub commit message."
+    },
+    {
+        "id": 7,
+        "text": "Project managers, QA testers, and stakeholders can view branches, commit histories, and pull request statuses directly inside Jira without needing a GitHub license."
+    },
+    {
+        "id": 8,
+        "text": "Jira uses the synced GitHub data to calculate exact cycle times, deployment frequencies, and release readiness metrics on its built-in DevOps dashboards."
+    },
+    {
+        "id": 9,
+        "text": "The integration tracks code deployments through GitHub Actions, allowing Jira to display exactly which environment (like Staging or Production) a specific feature is live on."
+    },
+    {
+        "id": 10,
+        "text": "Advanced configurations let GitHub Advanced Security push vulnerability alerts directly into Jira as high-priority bugs, ensuring developers patch security flaws quickly."
+    }
+]}
