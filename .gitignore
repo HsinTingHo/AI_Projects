@@ -1,0 +1,21 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+.semanticSearch/
+.semanticSearch312/
+
+# Python cache and local tooling
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# IDE and editor metadata
+.vscode/
+.idea/
+*.iml
+
+# Operating-system files
+.DS_Store
+Thumbs.db

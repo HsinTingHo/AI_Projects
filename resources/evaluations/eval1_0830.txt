@@ -1,0 +1,11 @@
+ambiguous: 
+Recall@5=0.6667  nDCG@5=0.6083  MRR=0.7333
+
+exact_identifiers: 
+Recall@5=0.5833  nDCG@5=0.4521  MRR=0.4667
+
+natural_language: 
+Recall@5=0.5750  nDCG@5=0.6302  MRR=0.8667
+
+paraphrases: 
+Recall@5=0.5667  nDCG@5=0.4763  MRR=0.4900
