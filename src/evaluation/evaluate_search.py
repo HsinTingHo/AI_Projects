@@ -12,7 +12,7 @@ from typing import Any, Callable
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-EVALUATION_PATH = PROJECT_ROOT / "resources" / "evaluations" / "eval_amex_2025_dev_v1.jsonl"
+EVALUATION_PATH = PROJECT_ROOT / "resources" / "evaluations" / "american_express_2025_factual_category_1_eval.jsonl"
 EMBEDDINGS_PATH = PROJECT_ROOT / "resources" / "corpus" / "embedded" / "context_aware_embeddings.npy"
 METADATA_PATH = PROJECT_ROOT / "resources" / "corpus" / "embedded" / "context_aware_embeddings_metadata.json"
 TOP_K = 5
@@ -74,7 +74,14 @@ def rank_chunks(query_text: str, metadata: list[dict[str, Any]]) -> list[int]:
     """Search all embedded chunks and return their IDs in descending relevance order."""
     semantic_search = get_semantic_search()
     documents = [str(record["text"]) for record in metadata]
-    results = semantic_search(query=query_text, documents=documents, embeddings_path=EMBEDDINGS_PATH, top_k=len(documents))
+    results = semantic_search(
+        query=query_text,
+        documents=documents,
+        embeddings_path=EMBEDDINGS_PATH,
+        top_k=len(documents),
+        verbose=True,
+        log_top_k=TOP_K,
+    )
     return [int(metadata[result["index"]]["chunk_id"]) for result in results]
 
 
@@ -85,6 +92,7 @@ def evaluate_queries(queries: list[dict[str, Any]], metadata: list[dict[str, Any
     for query in queries:
         relevant_chunk_ids = answer_chunk_ids(query)
         ranked_chunk_ids = rank_chunks(str(query["query"]), metadata)
+        print(f"Answer Chunks: {relevant_chunk_ids}")
         category = str(query["eval_category"])
         totals[category]["recall@5"] += recall_at_k(ranked_chunk_ids, relevant_chunk_ids)
         totals[category]["nDCG@5"] += ndcg_at_k(ranked_chunk_ids, relevant_chunk_ids)

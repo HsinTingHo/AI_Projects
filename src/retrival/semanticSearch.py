@@ -93,10 +93,14 @@ def semantic_search(
     top_k: int = 5,
     model_name: str = MODEL_NAME,
     lexical_weight: float = 0.60,
+    verbose: bool = False,
+    log_top_k: int = 5,
 ) -> list[dict[str, Any]]:
     """Rank chunks with combined semantic, BM25, and exact-phrase relevance signals."""
     if not 0.0 <= lexical_weight <= 1.0:
         raise ValueError("lexical_weight must be between 0.0 and 1.0")
+    if log_top_k < 0:
+        raise ValueError("log_top_k must be non-negative")
 
     embeddings_path = Path(embeddings_path)
     if documents is None and metadata_path is not None:
@@ -118,7 +122,7 @@ def semantic_search(
     hybrid_scores = (1 - lexical_weight) * min_max_normalize(dense_scores) + lexical_weight * min_max_normalize(lexical_scores) + phrase_boosts(query_tokens, documents)
     top_indices = np.argsort(hybrid_scores)[::-1][:top_k]
 
-    return [
+    results = [
         {
             "index": int(index),
             "text": documents[index],
@@ -128,6 +132,12 @@ def semantic_search(
         }
         for index in top_indices
     ]
+    if verbose:
+        print(f"\nQuery: {query}")
+        for result in results[:log_top_k]:
+            preview = result["text"].replace("\n", " ")[:240]
+            print(f"Chunk Id {result['index']+1} | hybrid={result['score']:.4f} | semantic={result['semantic_score']:.4f} | lexical={result['lexical_score']:.4f}\n{preview}\n")
+    return results
 
 
 def main() -> None:
@@ -137,10 +147,7 @@ def main() -> None:
         "What is the total revenue in 2025?",
     ]
     for query in queries:
-        print(f"\nQuery: {query}")
-        for result in semantic_search(query, top_k=5):
-            preview = result["text"].replace("\n", " ")[:240]
-            print(f"Index {result['index']} | hybrid={result['score']:.4f} | semantic={result['semantic_score']:.4f} | lexical={result['lexical_score']:.4f}\n{preview}\n")
+        semantic_search(query, top_k=5, verbose=True)
 
 
 if __name__ == "__main__":
