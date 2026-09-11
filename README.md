@@ -1,10 +1,11 @@
-# RAG Document Search
+# Financial Report RAG Search
 
-This project cleans source documents, splits them into retrieval chunks, embeds
-those chunks with `all-MiniLM-L6-v2`, and runs semantic search or retrieval
-evaluation.
+This project builds and evaluates hybrid retrieval over the American Express
+2025 annual report. It extracts report-aware chunks, embeds them with
+`all-MiniLM-L6-v2`, and ranks chunks with semantic similarity, BM25-style
+lexical matching, and exact-phrase boosts.
 
-Run every command from the project root:
+Run commands from the project root:
 
 ```bash
 cd /Users/eva/Desktop/Projects/AI_Project
@@ -12,69 +13,47 @@ cd /Users/eva/Desktop/Projects/AI_Project
 
 ## Setup
 
-The project uses the Python 3.12 virtual environment named `.semanticSearch312`.
-Install the core dependencies with:
+The project uses the Python 3.12 environment at `.semanticSearch312`.
 
 ```bash
 ./.semanticSearch312/bin/pip install -r requirements.txt
 ```
 
-The annual-report PDF chunker additionally needs its PDF-extraction helpers:
+The annual-report PDF chunker also requires PDF-extraction helpers:
 
 ```bash
 ./.semanticSearch312/bin/pip install PyMuPDF pdfplumber requests tiktoken
 ```
 
-The first embedding or search run may download `all-MiniLM-L6-v2` from Hugging
-Face. Internet access is required unless the model is already cached locally.
+The first embedding or search run may download `all-MiniLM-L6-v2` from
+Hugging Face. Later runs use the local model cache when available.
 
-## Files and outputs
+## Project data flow
 
-| Location | Purpose |
+```text
+Annual-report PDF
+  → annual-report-aware JSONL chunks
+  → embeddings + metadata
+  → hybrid semantic search
+  → evaluation metrics + ranking diagnostics
+```
+
+| Artifact | Purpose |
 | --- | --- |
-| `resources/corpus/originals/financialStatement/` | Source annual-report PDF files. |
-| `resources/corpus/cleaned/financialStatement/` | Cleaned text files used by the basic chunker. |
-| `resources/corpus/american_express_2025_chunks.jsonl` | Annual-report chunks with section and page metadata. |
-| `resources/corpus/embedded/` | Saved NumPy embeddings and their matching metadata. |
+| `resources/corpus/originals/financialStatement/` | Source PDF files. |
+| `resources/corpus/american_express_2025_chunks.jsonl` | Annual-report chunks with page, section, subsection, and table metadata. |
+| `resources/corpus/embedded/context_aware_embeddings.npy` | Normalized chunk vectors. |
+| `resources/corpus/embedded/context_aware_embeddings_metadata.json` | Chunk text and metadata aligned to the vector indexes. |
+| `resources/evaluations/*.jsonl` | Evaluation queries and expected answer chunk IDs. |
+| `resources/evaluations/results/<version>/` | Saved metrics and ranking-debug output. |
 
-## Run each script manually
+## Recommended annual-report workflow
 
-### 1. Clean HTML or PDF source files
+### 1. Create report-aware chunks
 
-`load_documents.py` reads supported `.html`, `.htm`, and `.pdf` files from
-`resources/corpus/originals/financialStatement/` and writes cleaned `.txt`
-files to `resources/corpus/cleaned/`.
-
-```bash
-./.semanticSearch312/bin/python src/ingestion/load_documents.py
-```
-
-The script leaves an existing cleaned file unchanged. To re-clean a document,
-remove or rename that individual cleaned output first.
-
-### 2. Chunk cleaned text files
-
-`chunk_documents.py` reads `.txt` files from
-`resources/corpus/cleaned/financialStatement/`, produces roughly 350-word
-chunks with 60-word overlap, and writes JSON Lines to
-`resources/corpus/chunks`.
-
-```bash
-./.semanticSearch312/bin/python src/ingestion/chunk_documents.py
-```
-
-> The basic cleaner writes to `resources/corpus/cleaned/`, while this chunker
-> currently reads the `financialStatement` subfolder. Place the cleaned annual
-> report in `resources/corpus/cleaned/financialStatement/` before using this
-> command.
-
-### 3. Create annual-report-aware chunks
-
-`load_financial_statements.py` is the richer annual-report pipeline. It
-preserves document, year, section, subsection, page, content type, and table
-metadata in the JSONL output.
-
-Use the local PDF already in the repository:
+`load_financial_statements.py` is the recommended annual-report ingestion
+tool. It detects narrative sections, risks, tables, and footnotes, then writes
+JSONL records with report metadata.
 
 ```bash
 ./.semanticSearch312/bin/python src/ingestion/load_financial_statements.py \
@@ -83,26 +62,20 @@ Use the local PDF already in the repository:
   --output resources/corpus/american_express_2025_chunks.jsonl
 ```
 
-To download instead, omit `--no-download` and supply a working PDF URL:
+To download a different PDF, omit `--no-download` and supply a valid `--url`,
+along with the desired local `--pdf` and JSONL `--output` paths.
 
-```bash
-./.semanticSearch312/bin/python src/ingestion/load_financial_statements.py \
-  --url "https://example.com/annual-report.pdf" \
-  --pdf resources/corpus/originals/financialStatement/report.pdf \
-  --output resources/corpus/report_chunks.jsonl
-```
+### 2. Generate embeddings
 
-### 4. Embed chunks
-
-`embed_documents.py` reads the annual-report JSONL file by default and saves
-`context_aware_embeddings.npy` plus
-`context_aware_embeddings_metadata.json` in `resources/corpus/embedded/`.
+`embed_documents.py` reads
+`resources/corpus/american_express_2025_chunks.jsonl` by default and writes
+the matching vector and metadata files to `resources/corpus/embedded/`.
 
 ```bash
 ./.semanticSearch312/bin/python src/ingestion/embed_documents.py
 ```
 
-Pass custom paths or settings when needed:
+Use custom paths, a filename prefix, batch size, or model when needed:
 
 ```bash
 ./.semanticSearch312/bin/python src/ingestion/embed_documents.py \
@@ -113,50 +86,121 @@ Pass custom paths or settings when needed:
   --model-name all-MiniLM-L6-v2
 ```
 
-Use `--help` to see all available options:
+The command creates:
 
-```bash
-./.semanticSearch312/bin/python src/ingestion/embed_documents.py --help
+```text
+resources/corpus/embedded/context_aware_embeddings.npy
+resources/corpus/embedded/context_aware_embeddings_metadata.json
 ```
 
-### 5. Run semantic search
+### 3. Run hybrid search
 
-`semanticSearch.py` loads
-`resources/corpus/embedded/context_aware_embeddings.npy` and runs the sample
-queries declared in its `queries` list.
+`semanticSearch.py` loads the default annual-report embeddings and runs the
+sample queries in its `queries` list.
 
 ```bash
 ./.semanticSearch312/bin/python src/retrival/semanticSearch.py
 ```
 
-To search for a different question, edit the `queries` list near the bottom of
-`src/retrival/semanticSearch.py`, then run the same command again.
+To try another question, edit the `queries` list near the bottom of
+`src/retrival/semanticSearch.py`, then rerun the command.
 
-### 6. Evaluate retrieval quality
+Hybrid ranking combines the following signals:
 
-`evaluate_search.py` reads `resources/corpus/labled_queries.txt` and prints
-average Recall@5, nDCG@5, and MRR for each query category.
+```text
+0.4 × normalized semantic similarity
++ 0.6 × normalized BM25 lexical score
++ exact-phrase boost
+```
+
+The terminal output includes the chunk ID, hybrid score, semantic score,
+lexical score, and a text preview. Chunk IDs are displayed as one-based values
+that match the annual-report JSONL `chunk_id` fields.
+
+## Evaluation
+
+`evaluate_search.py` evaluates hybrid retrieval against annual-report JSONL
+labels. Each line must contain at least:
+
+```json
+{
+  "eval_id": "AMEX25-USCS-F02",
+  "query": "How much were U.S. Consumer Services' total revenues?",
+  "eval_category": "factual_category_1",
+  "answer_chunks": [{"chunk_id": 144}]
+}
+```
+
+`answer_chunks[].chunk_id` is the binary relevance ground truth. The evaluator
+reports Recall@5, nDCG@5, and MRR by `eval_category`.
+
+Run the default evaluation file:
 
 ```bash
 ./.semanticSearch312/bin/python src/evaluation/evaluate_search.py
 ```
 
-This evaluation uses `resources/corpus/embedded/embeddings.npy` and
-`metadata.json`. These are a legacy artifact pair that is already present in
-the repository. The current annual-report embedding command instead creates
-`context_aware_embeddings.npy` and
-`context_aware_embeddings_metadata.json`; update the evaluator's constants if
-you want it to evaluate that annual-report output.
-
-## Typical annual-report workflow
+Run a specific evaluation file and save versioned artifacts:
 
 ```bash
-./.semanticSearch312/bin/python src/ingestion/load_financial_statements.py \
-  --no-download \
-  --pdf resources/corpus/originals/financialStatement/American-Express-Annual-Report-2025.pdf \
-  --output resources/corpus/american_express_2025_chunks.jsonl
-
-./.semanticSearch312/bin/python src/ingestion/embed_documents.py
-
-./.semanticSearch312/bin/python src/retrival/semanticSearch.py
+./.semanticSearch312/bin/python src/evaluation/evaluate_search.py \
+  --evaluation-file eval_amex_2025_dev_v1.jsonl \
+  --version v1
 ```
+
+When `--version` is present, the evaluator creates:
+
+```text
+resources/evaluations/results/v1/
+  eval_amex_2025_dev_v1_metrics.v1.jsonl
+  eval_amex_2025_dev_v1_rank.v1.jsonl
+```
+
+The metrics file contains category averages. The ranking file contains one
+record per evaluation query, including expected chunk IDs, first relevant
+rank, per-query metrics, and the top 20 ranked chunks with page/section
+metadata, hybrid/semantic/lexical scores, relevance flags, and text previews.
+
+Evaluation also prints the top five search results and expected answer chunk
+IDs for each query, making it practical to inspect a run in real time.
+
+## Basic HTML/PDF utilities
+
+The following utilities remain available for simple document cleanup and
+word-based chunking. The report-aware workflow above is preferred for annual
+reports because it preserves table and page metadata.
+
+Clean `.html`, `.htm`, and `.pdf` files from
+`resources/corpus/originals/financialStatement/`:
+
+```bash
+./.semanticSearch312/bin/python src/ingestion/load_documents.py
+```
+
+The cleaner writes `.txt` files to `resources/corpus/cleaned/` and does not
+overwrite an existing cleaned file.
+
+Create approximately 350-word chunks with 60-word overlap:
+
+```bash
+./.semanticSearch312/bin/python src/ingestion/chunk_documents.py
+```
+
+This basic chunker reads from `resources/corpus/cleaned/financialStatement/`
+and writes JSONL records to `resources/corpus/chunks`. Place cleaned files in
+that subfolder before running it.
+
+## Helpful commands
+
+Show embedding options:
+
+```bash
+./.semanticSearch312/bin/python src/ingestion/embed_documents.py --help
+```
+
+Show evaluation options:
+
+```bash
+./.semanticSearch312/bin/python src/evaluation/evaluate_search.py --help
+```
+
