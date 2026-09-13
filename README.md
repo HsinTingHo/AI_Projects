@@ -35,6 +35,7 @@ Annual-report PDF
   → annual-report-aware JSONL chunks
   → embeddings + metadata
   → hybrid semantic search
+  → cited, grounded LLM answer
   → evaluation metrics + ranking diagnostics
 ```
 
@@ -116,6 +117,41 @@ Hybrid ranking combines the following signals:
 The terminal output includes the chunk ID, hybrid score, semantic score,
 lexical score, and a text preview. Chunk IDs are displayed as one-based values
 that match the annual-report JSONL `chunk_id` fields.
+
+## Generation
+
+`src/generation/prompt.py` builds a bounded evidence context and requires the
+model to cite the retrieved chunks. `src/generation/llm.py` calls the OpenAI
+Responses API, returns the answer plus citation-validation details, and reads
+its API key only from `FINANCIAL_RAG_API_KEY`.
+
+Install the updated requirements, then set the key in the current terminal:
+
+```bash
+./.semanticSearch312/bin/pip install -r requirements.txt
+export FINANCIAL_RAG_API_KEY='your-api-key'
+```
+
+Use the following example to retrieve five chunks, restore their source
+metadata, and generate a grounded answer. Change `model` if your account uses
+a different available model.
+
+```bash
+./.semanticSearch312/bin/python -c "
+import json
+from src.retrival.semanticSearch import semantic_search
+from src.generation.llm import generate_answer
+
+metadata = json.load(open('resources/corpus/embedded/context_aware_embeddings_metadata.json'))
+search_results = semantic_search('What was total revenue in 2025?', top_k=5)
+evidence = [metadata[result['index']] for result in search_results]
+print(generate_answer('What was total revenue in 2025?', evidence, model='gpt-5'))
+"
+```
+
+The returned dictionary includes `answer`, `valid_citation_ids`, and
+`invalid_citation_ids`. Treat a non-empty `invalid_citation_ids` list as a
+grounding failure that should be retried or shown for review.
 
 ## Evaluation
 
@@ -203,4 +239,3 @@ Show evaluation options:
 ```bash
 ./.semanticSearch312/bin/python src/evaluation/evaluate_search.py --help
 ```
-
