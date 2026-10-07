@@ -11,7 +11,7 @@ import numpy as np
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CORPUS_DIR = PROJECT_ROOT / "resources" / "corpus"
-FILE_TO_CHUNK = "american_express_2025_chunks.jsonl"
+FILE_TO_CHUNK = "fixed_chunks.jsonl"
 CHUNK_PATH = CORPUS_DIR / FILE_TO_CHUNK
 OUTPUT_FILENAME = "context_aware_embeddings"
 MODEL_NAME = "all-MiniLM-L6-v2"

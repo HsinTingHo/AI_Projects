@@ -226,6 +226,37 @@ def split_by_tokens(
     return chunks
 
 
+def split_with_overlap(
+    text: str,
+    chunking_size: int,
+    overlap_size: int,
+) -> list[str]:
+    """Create fixed token windows when callers need explicit chunk and overlap sizes."""
+    if chunking_size < 1:
+        raise ValueError("chunking_size must be positive")
+    if overlap_size < 0 or overlap_size >= chunking_size:
+        raise ValueError("overlap_size must be at least zero and smaller than chunking_size")
+
+    if ENCODER is not None:
+        tokens = ENCODER.encode(text)
+        decode = ENCODER.decode
+        window_size = chunking_size
+        window_overlap = overlap_size
+    else:
+        tokens = re.findall(r"\S+", text)
+        decode = lambda values: " ".join(values)
+        # Match token_count's 1.3-tokens-per-word fallback approximation.
+        window_size = max(1, int(chunking_size / 1.3))
+        window_overlap = int(overlap_size / 1.3)
+
+    step_size = window_size - window_overlap
+    return [
+        decode(tokens[start:start + window_size]).strip()
+        for start in range(0, len(tokens), step_size)
+        if tokens[start:start + window_size]
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Heading detection
 # ---------------------------------------------------------------------------
@@ -502,6 +533,70 @@ def extract_text_blocks(pdf_path: Path) -> list[TextBlock]:
             )
 
     return all_blocks
+
+
+def fixed_text_by_page(pdf_path: Path) -> list[tuple[int, str]]:
+    """Collect clean page text for fixed-window chunking without semantic boundaries."""
+    blocks_by_page: dict[int, list[TextBlock]] = {}
+    for block in extract_text_blocks(pdf_path):
+        if PAGE_NUMBER_RE.match(block.text) or FOOTER_RE.match(block.text):
+            continue
+        blocks_by_page.setdefault(block.page, []).append(block)
+
+    page_text: list[tuple[int, str]] = []
+    for page, blocks in sorted(blocks_by_page.items()):
+        blocks.sort(key=lambda block: (block.y0, block.x0))
+        text = "\n\n".join(block.text for block in blocks).strip()
+        if text:
+            page_text.append((page, text))
+    return page_text
+
+
+def build_fixed_size_chunks(
+    pdf_path: Path,
+    chunking_size: int,
+    overlap_size: int,
+    document: str = DOCUMENT_NAME,
+    year: int = REPORT_YEAR,
+) -> list[Chunk]:
+    """Build fixed token windows when CLI sizes deliberately replace report-aware chunks."""
+    page_text = fixed_text_by_page(pdf_path)
+    combined_text = "\n\n".join(text for _, text in page_text)
+    pieces = split_with_overlap(combined_text, chunking_size, overlap_size)
+    page_boundaries: list[tuple[int, int, int]] = []
+    token_position = 0
+    for page, text in page_text:
+        page_tokens = token_count(text)
+        page_boundaries.append((page, token_position, token_position + page_tokens))
+        token_position += page_tokens
+
+    output: list[Chunk] = []
+    step_size = chunking_size - overlap_size
+    for index, piece in enumerate(pieces):
+        start = index * step_size
+        end = start + token_count(piece)
+        pages = [
+            page
+            for page, page_start, page_end in page_boundaries
+            if start < page_end and end > page_start
+        ]
+        if not pages:
+            pages = [page_text[-1][0]]
+        page = pages[0] if len(pages) == 1 else f"{pages[0]}-{pages[-1]}"
+        output.append(
+            Chunk(
+                document=document,
+                year=year,
+                section="",
+                subsection="",
+                page=page,
+                content_type="fixed_window",
+                table_name="",
+                text=piece,
+                token_count=token_count(piece),
+            )
+        )
+    return output
 
 
 # ---------------------------------------------------------------------------
@@ -1191,7 +1286,27 @@ def parse_args() -> argparse.Namespace:
         help="Use --pdf as an existing local PDF instead of downloading.",
     )
 
-    return parser.parse_args()
+    parser.add_argument(
+        "--chunking-size",
+        type=int,
+        help="Fixed token-window size; requires --overlap-size and replaces report-aware chunking.",
+    )
+
+    parser.add_argument(
+        "--overlap-size",
+        type=int,
+        help="Token overlap for --chunking-size; must be smaller than the chunking size.",
+    )
+
+    args = parser.parse_args()
+    fixed_size_requested = args.chunking_size is not None or args.overlap_size is not None
+    if fixed_size_requested and (args.chunking_size is None or args.overlap_size is None):
+        parser.error("--chunking-size and --overlap-size must be provided together")
+    if fixed_size_requested and args.chunking_size < 1:
+        parser.error("--chunking-size must be positive")
+    if fixed_size_requested and not 0 <= args.overlap_size < args.chunking_size:
+        parser.error("--overlap-size must be at least zero and smaller than --chunking-size")
+    return args
 
 
 def main() -> int:
@@ -1211,14 +1326,23 @@ def main() -> int:
         )
         return 1
 
-    print("Extracting and chunking...")
-    chunker = ReportChunker(
-        pdf_path=pdf_path,
-        document=DOCUMENT_NAME,
-        year=REPORT_YEAR,
-    )
-
-    chunks = chunker.build()
+    if args.chunking_size is not None:
+        print("Extracting and fixed-window chunking...")
+        chunks = build_fixed_size_chunks(
+            pdf_path=pdf_path,
+            chunking_size=args.chunking_size,
+            overlap_size=args.overlap_size,
+            document=DOCUMENT_NAME,
+            year=REPORT_YEAR,
+        )
+    else:
+        print("Extracting and report-aware chunking...")
+        chunker = ReportChunker(
+            pdf_path=pdf_path,
+            document=DOCUMENT_NAME,
+            year=REPORT_YEAR,
+        )
+        chunks = chunker.build()
 
     print(f"Writing {len(chunks)} chunks -> {output_path}")
     write_jsonl(chunks, output_path)
