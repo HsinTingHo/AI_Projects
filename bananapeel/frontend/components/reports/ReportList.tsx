@@ -17,7 +17,7 @@ export type ReportListProps = {
 };
 
 export default function ReportList({ reports, selectedReportIds, onSelect, onDelete, deletingReportIds = [], loading = false, error, onRetry, hasSearch = false, onPreview, previewReportIds = [] }: ReportListProps) {
-  if (loading) return <p role="status" className="px-2 py-6 text-sm text-[#757a6d] dark:text-[#adb5a1]">Loading reports…</p>;
+  if (loading) return <p role="status" className="px-2 py-6 text-sm text-muted dark:text-muted-dark">Loading reports…</p>;
   if (error) return <div role="alert"><EmptyState title="Couldn’t load reports" description={error} action={onRetry && <Button variant="secondary" onClick={onRetry}>Try again</Button>} /></div>;
   if (!reports.length) return <EmptyState title={hasSearch ? "No matching reports" : "Your insights start here"} description={hasSearch ? "Try another company, year, or filename." : "Upload a financial report to start exploring."} />;
 

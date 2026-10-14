@@ -25,7 +25,7 @@ export default function SearchInput({
     <div className={`min-w-0 ${containerClassName}`}>
       <label
         htmlFor={inputId}
-        className={hideLabel ? "sr-only" : "mb-2 block text-sm font-medium text-[#293323] dark:text-[#eef1e5]"}
+        className={hideLabel ? "sr-only" : "mb-2 block text-sm font-medium text-ink dark:text-ink-dark"}
       >
         {label}
       </label>
@@ -37,7 +37,7 @@ export default function SearchInput({
           stroke="currentColor"
           strokeWidth="1.75"
           strokeLinecap="round"
-          className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#757a6d] dark:text-[#adb5a1]"
+          className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted dark:text-muted-dark"
         >
           <circle cx="10.5" cy="10.5" r="6.5" />
           <path d="m16 16 4.5 4.5" />
@@ -49,9 +49,9 @@ export default function SearchInput({
           disabled={disabled}
           placeholder={placeholder}
           className={[
-            "min-h-11 w-full min-w-0 rounded-xl border border-[#e5e6db] bg-[#fffefa] py-2.5 pr-3 pl-9 text-base text-[#293323] sm:text-sm",
-            "placeholder:text-[#757a6d] dark:border-[#3c4234] dark:bg-[#24271f] dark:text-[#eef1e5] dark:placeholder:text-[#adb5a1]",
-            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#827013] dark:focus-visible:outline-[#f5d84b]",
+            "min-h-11 w-full min-w-0 rounded-xl border border-line bg-surface py-2.5 pr-3 pl-9 text-base text-ink sm:text-sm",
+            "placeholder:text-muted dark:border-line-dark dark:bg-surface-dark dark:text-ink-dark dark:placeholder:text-muted-dark",
+            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-olive dark:focus-visible:outline-banana",
             "disabled:cursor-not-allowed disabled:opacity-50",
             className,
           ].join(" ")}

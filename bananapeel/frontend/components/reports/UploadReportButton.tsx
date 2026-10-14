@@ -46,9 +46,9 @@ export default function UploadReportButton({ onUpload, maxSizeMB = 25, disabled 
       <Button fullWidth disabled={disabled} loading={uploading} loadingText="Uploading…" aria-describedby={messageId} onClick={() => input.current?.click()}>
         <span aria-hidden="true">＋</span> Upload report
       </Button>
-      <p id={messageId} className="text-xs text-[#757a6d] dark:text-[#adb5a1]">PDF · Up to {maxSizeMB} MB</p>
+      <p id={messageId} className="text-xs text-muted dark:text-muted-dark">PDF · Up to {maxSizeMB} MB</p>
       {error && <p role="alert" className="text-xs text-red-700 dark:text-red-300">{error}</p>}
-      <p role="status" className="break-words text-xs text-[#757a6d] dark:text-[#adb5a1]">{message}</p>
+      <p role="status" className="break-words text-xs text-muted dark:text-muted-dark">{message}</p>
     </div>
   );
 }

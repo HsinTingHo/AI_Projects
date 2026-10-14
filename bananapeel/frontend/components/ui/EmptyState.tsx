@@ -23,16 +23,16 @@ export default function EmptyState({
       {icon && (
         <span
           aria-hidden="true"
-          className="mb-1 inline-flex size-12 items-center justify-center rounded-2xl bg-[#fbf1b9] text-[#62551b] dark:bg-[#474122] dark:text-[#f5d84b] [&>svg]:size-6"
+          className="mb-1 inline-flex size-12 items-center justify-center rounded-2xl bg-banana-soft text-accent-ink dark:bg-banana-soft-dark dark:text-banana [&>svg]:size-6"
         >
           {icon}
         </span>
       )}
-      <p className="text-base font-medium text-[#293323] dark:text-[#eef1e5]">
+      <p className="text-base font-medium text-ink dark:text-ink-dark">
         {title}
       </p>
       {description && (
-        <p className="max-w-sm text-sm leading-relaxed text-[#757a6d] dark:text-[#adb5a1]">
+        <p className="max-w-sm text-sm leading-relaxed text-muted dark:text-muted-dark">
           {description}
         </p>
       )}

@@ -1,8 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fffefa;
-  --foreground: #293323;
+  --background: var(--color-surface);
+  --foreground: var(--color-ink);
+}
+
+/* Shared BananaPeel palette. Explicit dark variants preserve component contrast. */
+@theme {
+  --color-banana: #f5d84b;
+  --color-banana-hover: #e8ca39;
+  --color-banana-soft: #fbf1b9;
+  --color-banana-soft-dark: #474122;
+  --color-ink: #293323;
+  --color-ink-dark: #eef1e5;
+  --color-muted: #757a6d;
+  --color-muted-dark: #adb5a1;
+  --color-surface: #fffefa;
+  --color-canvas-dark: #1c1e18;
+  --color-surface-dark: #24271f;
+  --color-surface-muted: #f5f4ec;
+  --color-surface-hover-dark: #303529;
+  --color-line: #e5e6db;
+  --color-line-dark: #3c4234;
+  --color-olive: #827013;
+  --color-selection: #d3c566;
+  --color-accent-ink: #62551b;
+  --color-notice: #fbf6dd;
+  --color-notice-dark: #302d1d;
+  --color-notice-ink-dark: #ddd09c;
 }
 
 @theme inline {
@@ -14,8 +39,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #1c1e18;
-    --foreground: #eef1e5;
+    --background: var(--color-canvas-dark);
+    --foreground: var(--color-ink-dark);
   }
 }
 

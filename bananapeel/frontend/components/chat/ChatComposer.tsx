@@ -43,21 +43,21 @@ export default function ChatComposer({ onSend, selectedReportCount, isSending = 
 
   return (
     <div className="space-y-2">
-      <form onSubmit={submit} aria-label="Ask about your reports" className="rounded-2xl border border-[#e5e6db] bg-[#fffefa] p-4 dark:border-[#3c4234] dark:bg-[#24271f]">
+      <form onSubmit={submit} aria-label="Ask about your reports" className="rounded-2xl border border-line bg-surface p-4 dark:border-line-dark dark:bg-surface-dark">
         <label htmlFor={id} className="sr-only">Your question</label>
         <textarea id={id} value={draft} onChange={event => setDraft(event.target.value)} disabled={disabled} readOnly={busy} maxLength={maxLength} rows={2} aria-describedby={`${id}-context${error ? ` ${id}-error` : ""}`} placeholder="Ask a question. Find the insight." onKeyDown={event => {
           if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing && event.nativeEvent.keyCode !== 229) {
             event.preventDefault();
             event.currentTarget.form?.requestSubmit();
           }
-        }} className="min-h-16 w-full resize-y rounded-md bg-transparent text-base text-[#293323] outline-offset-4 placeholder:text-[#757a6d] disabled:opacity-50 dark:text-[#eef1e5] dark:placeholder:text-[#adb5a1]" />
+        }} className="min-h-16 w-full resize-y rounded-md bg-transparent text-base text-ink outline-offset-4 placeholder:text-muted disabled:opacity-50 dark:text-ink-dark dark:placeholder:text-muted-dark" />
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-          <p id={`${id}-context`} className="text-xs text-[#757a6d] dark:text-[#adb5a1]">{selectedReportCount > 0 ? `${selectedReportCount} report${selectedReportCount === 1 ? "" : "s"} selected` : "Select a ready report to ask a question."}</p>
+          <p id={`${id}-context`} className="text-xs text-muted dark:text-muted-dark">{selectedReportCount > 0 ? `${selectedReportCount} report${selectedReportCount === 1 ? "" : "s"} selected` : "Select a ready report to ask a question."}</p>
           {busy && onStop ? <Button variant="secondary" onClick={onStop}>Stop</Button> : <IconButton label={busy ? "Sending question" : "Send question"} type="submit" variant="primary" disabled={blocked || !draft.trim()} loading={busy}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5m-6 6 6-6 6 6" /></svg></IconButton>}
         </div>
       </form>
       {error && <p id={`${id}-error`} role="alert" className="text-sm text-red-700 dark:text-red-300">{error}</p>}
-      <p className="text-center text-xs text-[#757a6d] dark:text-[#adb5a1]">Rooted in your reports. Linked to the source.</p>
+      <p className="text-center text-xs text-muted dark:text-muted-dark">Rooted in your reports. Linked to the source.</p>
     </div>
   );
 }

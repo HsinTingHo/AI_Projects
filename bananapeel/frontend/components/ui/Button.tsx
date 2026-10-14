@@ -2,11 +2,11 @@ import type { ComponentPropsWithRef } from "react";
 
 const variants = {
   primary:
-    "bg-[#f5d84b] text-[#293323] enabled:hover:bg-[#e8ca39]",
+    "bg-banana text-ink enabled:hover:bg-banana-hover",
   secondary:
-    "border border-[#e5e6db] bg-[#fffefa] text-[#293323] enabled:hover:bg-[#f5f4ec] dark:border-[#3c4234] dark:bg-[#24271f] dark:text-[#eef1e5] dark:enabled:hover:bg-[#303529]",
+    "border border-line bg-surface text-ink enabled:hover:bg-surface-muted dark:border-line-dark dark:bg-surface-dark dark:text-ink-dark dark:enabled:hover:bg-surface-hover-dark",
   ghost:
-    "bg-transparent text-[#293323] enabled:hover:bg-[#f5f4ec] dark:text-[#eef1e5] dark:enabled:hover:bg-[#303529]",
+    "bg-transparent text-ink enabled:hover:bg-surface-muted dark:text-ink-dark dark:enabled:hover:bg-surface-hover-dark",
 } as const;
 
 const sizes = {
@@ -45,7 +45,7 @@ export default function Button({
       aria-busy={loading || ariaBusy}
       className={[
         "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-colors motion-reduce:transition-none",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#827013] dark:focus-visible:outline-[#f5d84b]",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-olive dark:focus-visible:outline-banana",
         "disabled:cursor-not-allowed disabled:opacity-50 enabled:cursor-pointer",
         variants[variant],
         sizes[size],

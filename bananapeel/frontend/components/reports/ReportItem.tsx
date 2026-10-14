@@ -24,19 +24,19 @@ export default function ReportItem({ report, selected, onSelect, onDelete, onPre
   const label = `${report.company} ${report.year} ${report.reportType ?? "Annual report"}`;
 
   return (
-    <div className={`flex items-start gap-1 rounded-xl border p-2 ${selected ? "border-[#d3c566] bg-[#fffefa] dark:border-[#827013] dark:bg-[#24271f]" : "border-transparent"}`}>
+    <div className={`flex items-start gap-1 rounded-xl border p-2 ${selected ? "border-selection bg-surface dark:border-olive dark:bg-surface-dark" : "border-transparent"}`}>
       <button
         type="button"
         aria-label={`${selected ? "Deselect" : "Select"} ${label}`}
         aria-pressed={selected}
         disabled={deleting || (!selected && report.status !== "ready")}
         onClick={() => onSelect(report.id)}
-        className="flex min-h-11 min-w-0 flex-1 items-start gap-2 rounded-lg p-1 text-left text-[#293323] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#827013] disabled:cursor-not-allowed dark:text-[#eef1e5] dark:focus-visible:outline-[#f5d84b]"
+        className="flex min-h-11 min-w-0 flex-1 items-start gap-2 rounded-lg p-1 text-left text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-olive disabled:cursor-not-allowed dark:text-ink-dark dark:focus-visible:outline-banana"
       >
         <span aria-hidden="true" className="mt-0.5 text-sm">{selected ? "☑" : "☐"}</span>
         <span className="flex min-w-0 flex-col items-start gap-1.5">
           <span className="break-words text-sm font-medium">{report.company}</span>
-          <span className="text-xs text-[#757a6d] dark:text-[#adb5a1]">{report.year} · {report.reportType ?? "Annual report"}</span>
+          <span className="text-xs text-muted dark:text-muted-dark">{report.year} · {report.reportType ?? "Annual report"}</span>
           <StatusBadge status={report.status} role={undefined} />
           {report.status === "failed" && report.error && <span className="break-words text-xs text-red-700 dark:text-red-300">{report.error}</span>}
         </span>

@@ -60,8 +60,8 @@ export default function ReportSection({ reports, selectedReportIds, onSelectionC
     <section aria-labelledby={headingId} className="flex min-w-0 flex-col gap-4">
       <UploadReportButton onUpload={onUpload} maxSizeMB={maxUploadSizeMB} successMessage={uploadSuccessMessage} />
       <div className="mt-2 flex items-center justify-between gap-2">
-        <h2 id={headingId} className="text-xs font-medium tracking-widest text-[#757a6d] uppercase dark:text-[#adb5a1]">Available reports</h2>
-        {!loading && !error && <span className="text-xs text-[#757a6d] dark:text-[#adb5a1]">{visibleReports.length}</span>}
+        <h2 id={headingId} className="text-xs font-medium tracking-widest text-muted uppercase dark:text-muted-dark">Available reports</h2>
+        {!loading && !error && <span className="text-xs text-muted dark:text-muted-dark">{visibleReports.length}</span>}
       </div>
       <SearchInput label="Search reports" placeholder="Company, year, or filename" value={query} onChange={event => setQuery(event.target.value)} />
       {deleteError && <p role="alert" className="text-xs text-red-700 dark:text-red-300">{deleteError}</p>}
