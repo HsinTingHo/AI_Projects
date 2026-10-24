@@ -8,6 +8,7 @@ import Button from "./ui/Button";
 import MessageList, { type ChatMessage } from "./chat/MessageList";
 import ChatComposer from "./chat/ChatComposer";
 import SuggestedQuestions from "./chat/SuggestedQuestions";
+import { uploadReport } from "../lib/reports";
 import type { Report } from "./reports/ReportItem";
 
 const initialReports: Report[] = [2025, 2024].map(year => ({
@@ -74,10 +75,13 @@ export default function BananaPeelApp() {
   }
 
   async function upload(file: File) {
-    const id = crypto.randomUUID();
-    files.current.set(id, { name: file.name, url: URL.createObjectURL(file) });
-    setReports(previous => [{ id, company: file.name.replace(/\.pdf$/i, ""), year: new Date().getFullYear(), filename: file.name, status: "failed", reportType: "Local PDF", error: "Preview only. Analysis is not connected." }, ...previous]);
-    setNotice(`${file.name} added locally. It has not been uploaded or analyzed.`);
+    const saved = await uploadReport(file);
+    files.current.set(saved.id, { name: file.name, url: URL.createObjectURL(file) });
+    setReports(previous => [{
+      id: saved.id, company: saved.filename.replace(/\.pdf$/i, ""),
+      filename: saved.filename, status: saved.status, reportType: "Uploaded PDF",
+    }, ...previous]);
+    setNotice(`${saved.filename} saved to the server. Analysis is not connected yet.`);
   }
 
   function removeReport() {
@@ -110,11 +114,11 @@ export default function BananaPeelApp() {
         <Button variant="secondary" aria-expanded={isReportPanelOpen} aria-controls="report-panel" onClick={() => setIsReportPanelOpen(open => !open)}>{isReportPanelOpen ? "Close" : "Reports"}</Button>
       </div>
       <div id="report-panel" className={`${isReportPanelOpen ? "flex" : "hidden"} md:flex`}>
-        <SidePanel className="h-full" reports={reports} selectedReportIds={selected} onSelectionChange={setSelected} onUpload={upload} onDelete={async id => setDeleteId(id)} uploadSuccessMessage="PDF added locally. No file was sent to a server." footer={footer} onPreview={id => { const file = files.current.get(id); if (file) setPreview(file); }} previewReportIds={reports.filter(report => !report.id.startsWith("sample-")).map(report => report.id)} />
+        <SidePanel className="h-full" reports={reports} selectedReportIds={selected} onSelectionChange={setSelected} onUpload={upload} onDelete={async id => setDeleteId(id)} uploadSuccessMessage="PDF saved to the server." footer={footer} onPreview={id => { const file = files.current.get(id); if (file) setPreview(file); }} previewReportIds={reports.filter(report => !report.id.startsWith("sample-")).map(report => report.id)} />
       </div>
       <main id="main-content" className="flex min-w-0 flex-1 flex-col">
         <Header context={companies.length === 1 ? companies[0] : companies.length ? `${companies.length} companies` : "Your workspace"} onNewChat={newChat} disabled={sending} />
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-notice px-5 py-2.5 text-xs text-accent-ink dark:border-line-dark dark:bg-notice-dark dark:text-notice-ink-dark"><span><strong className="font-medium">Demo workspace</strong> · Sample answers. Files stay in this tab.</span><span>Python backend not connected</span></div>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-notice px-5 py-2.5 text-xs text-accent-ink dark:border-line-dark dark:bg-notice-dark dark:text-notice-ink-dark"><span><strong className="font-medium">Demo workspace</strong> · Sample answers · Uploads are saved to the server.</span><span>Report list is session-only</span></div>
         {notice && <div role="status" className="flex items-start justify-between gap-3 px-5 pt-4 text-xs text-muted dark:text-muted-dark"><p className="break-all">{notice}</p><button type="button" aria-label="Dismiss notification" onClick={() => setNotice("")} className="rounded p-1">✕</button></div>}
         <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-5 sm:px-10 lg:px-16">
           <div className={`flex-1 py-10 ${messages.length ? "" : "flex flex-col justify-center"}`}>
@@ -134,7 +138,7 @@ export default function BananaPeelApp() {
         </div>
       </main>
       <dialog ref={deleteDialog} onCancel={() => setDeleteId(null)} onClose={() => setDeleteId(null)} aria-labelledby="delete-heading" className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-surface p-6 text-ink backdrop:bg-black/40 dark:bg-surface-dark dark:text-ink-dark">
-        <h2 id="delete-heading" className="text-lg font-medium">Remove this report?</h2><p className="mt-2 break-words text-sm text-muted dark:text-muted-dark">{reports.find(report => report.id === deleteId)?.filename} will be removed from this workspace.</p>
+        <h2 id="delete-heading" className="text-lg font-medium">Remove this report?</h2><p className="mt-2 break-words text-sm text-muted dark:text-muted-dark">{reports.find(report => report.id === deleteId)?.filename} will be removed from this list only. Any server copy will remain stored.</p>
         <div className="mt-6 flex justify-end gap-2"><Button variant="ghost" onClick={() => deleteDialog.current?.close()}>Cancel</Button><Button onClick={removeReport}>Remove report</Button></div>
       </dialog>
       <dialog ref={previewDialog} onClose={() => setPreview(null)} aria-labelledby="preview-heading" className="m-auto w-[calc(100%-2rem)] max-w-4xl rounded-2xl bg-surface p-5 text-ink backdrop:bg-black/40 dark:bg-surface-dark dark:text-ink-dark">

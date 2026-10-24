@@ -4,7 +4,7 @@ import StatusBadge, { type StatusBadgeProps } from "../ui/StatusBadge";
 export type Report = {
   id: string;
   company: string;
-  year: number;
+  year?: number;
   filename: string;
   status: StatusBadgeProps["status"];
   reportType?: string;
@@ -21,7 +21,7 @@ export type ReportItemProps = {
 };
 
 export default function ReportItem({ report, selected, onSelect, onDelete, onPreview, deleting = false }: ReportItemProps) {
-  const label = `${report.company} ${report.year} ${report.reportType ?? "Annual report"}`;
+  const label = `${report.company} ${report.year ?? ""} ${report.reportType ?? "Annual report"}`;
 
   return (
     <div className={`flex items-start gap-1 rounded-xl border p-2 ${selected ? "border-selection bg-surface dark:border-olive dark:bg-surface-dark" : "border-transparent"}`}>
@@ -36,7 +36,7 @@ export default function ReportItem({ report, selected, onSelect, onDelete, onPre
         <span aria-hidden="true" className="mt-0.5 text-sm">{selected ? "☑" : "☐"}</span>
         <span className="flex min-w-0 flex-col items-start gap-1.5">
           <span className="break-words text-sm font-medium">{report.company}</span>
-          <span className="text-xs text-muted dark:text-muted-dark">{report.year} · {report.reportType ?? "Annual report"}</span>
+          <span className="text-xs text-muted dark:text-muted-dark">{report.year ? `${report.year} · ` : ""} {report.reportType ?? "Annual report"}</span>
           <StatusBadge status={report.status} role={undefined} />
           {report.status === "failed" && report.error && <span className="break-words text-xs text-red-700 dark:text-red-300">{report.error}</span>}
         </span>

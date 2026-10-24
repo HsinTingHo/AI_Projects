@@ -1,6 +1,10 @@
 import type { ComponentPropsWithoutRef } from "react";
 
 const statuses = {
+  queued: {
+    label: "Queued",
+    className: "bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
+  },
   uploading: {
     label: "Uploading",
     className: "bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-200",

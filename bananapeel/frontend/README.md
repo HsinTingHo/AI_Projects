@@ -34,3 +34,16 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+### Report uploads
+
+Uploads send multipart form data (`file`) to `POST /reports` on
+`http://localhost:8000` by default. Run the FastAPI backend and PostgreSQL before
+uploading. To use another API host, set `NEXT_PUBLIC_API_URL` in `.env.local`
+and restart Next.js (rebuild for production). The API must allow the frontend
+origin in its CORS settings. This URL is public; do not put credentials in it.
+
+Successful uploads use the server's ID and status. Queued reports are not yet
+available for chat; ingestion and chat remain unconnected. The sidebar list and
+PDF previews last only for the current session. Removing an item from this list
+does not delete its server copy.

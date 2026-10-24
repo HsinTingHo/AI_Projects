@@ -32,8 +32,8 @@ export default function UploadReportButton({ onUpload, maxSizeMB = 25, disabled 
     try {
       await onUpload(file);
       setMessage(successMessage ?? `${file.name} uploaded. Check its processing status below.`);
-    } catch {
-      setError("Upload failed. Please try again.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Upload failed. Please try again.");
     } finally {
       busy.current = false;
       setUploading(false);
