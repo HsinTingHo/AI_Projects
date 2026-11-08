@@ -1,19 +1,12 @@
 #initialize model
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from sentence_transformers import SentenceTransformer
 
- # Extract text, generate embeddings, save results
 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-tokenizer = model.tokenizer
 
 
-def count_tokens(text: str) -> int:
-    return len(tokenizer.encode(
-        text,
-        add_special_tokens=False,
-        truncation=False,
-    ))
+
 
 def claim_next_job(db_con, worker_id: str) -> object:
     """Atomically claim one eligible job, record the attempt, and establish a lease.
@@ -44,7 +37,7 @@ def claim_next_job(db_con, worker_id: str) -> object:
             attempt_count = attempt_count + 1
         FROM candidate
         WHERE job.id = candidate.id
-        RETURNING id, document_id, file_key, claim_token
+        RETURNING id, report_id, claim_token
         """
     ).fetchone()
     return jobs
@@ -67,7 +60,6 @@ def renew_lease(db_con, job_id: UUID, claim_token: UUID) -> None:
     if row is None:
         raise RuntimeError(f"Lease ownership lost for job {job_id}")
 
-
 def mark_succeeded(db_con, job_id: int, claim_token: str):
     db_con.execute(
         """
@@ -88,24 +80,24 @@ def mark_succeeded(db_con, job_id: int, claim_token: str):
     if row is None:
         raise RuntimeError(f"mark_succeeded failed for job {job_id}")
 
-def record_failure(job_id: int, claim_token: str, error: Exception):
-    db_con.execute(
-        """
-        UPDATE ingestion_jobs
-        SET status = 'failed',
-            claim_token = NULL,
-            claimed_by = NULL,
-            lease_expires_at = NULL,
-            heartbeat_at = clock_timestamp(),
-            last_error = %(error)s
-        WHERE id = %(job_id)s
-          AND claim_token = %(claim_token)s
-          AND status = 'running'
-        RETURNING id
-        """,
-        {"job_id": job_id, "claim_token": claim_token, "error": str(error)},
-    ).fetchone()
+    def record_failure(db_con, job_id: int, claim_token: str, error: Exception):
+        db_con.execute(
+            """
+            UPDATE ingestion_jobs
+            SET status = 'failed',
+                claim_token = NULL,
+                claimed_by = NULL,
+                lease_expires_at = NULL,
+                heartbeat_at = clock_timestamp(),
+                last_error = %(error)s
+            WHERE id = %(job_id)s
+            AND claim_token = %(claim_token)s
+            AND status = 'running'
+            RETURNING id
+            """,
+            {"job_id": job_id, "claim_token": claim_token, "error": str(error)},
+        ).fetchone()
 
-    if row is None:
-        raise RuntimeError(f"record_failure failed for job {job_id}")
+        if row is None:
+            raise RuntimeError(f"record_failure failed for job {job_id}")
 

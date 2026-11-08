@@ -1,6 +1,11 @@
 """Google Cloud Storage adapter using Application Default Credentials."""
 
 from typing import BinaryIO
+from google.api_core.exceptions import (
+    PreconditionFailed,
+    NotFound,
+)
+    
 
 from app.storage.base import validate_key
 
@@ -24,7 +29,7 @@ class GCSStorage:
 
     def save(self, key: str, source: BinaryIO) -> None:
         client, blob = self._blob(key)
-        from google.api_core.exceptions import PreconditionFailed
+         
         try:
             blob.upload_from_file(source, content_type="application/pdf", if_generation_match=0, timeout=60)
         except PreconditionFailed as error:
@@ -34,9 +39,11 @@ class GCSStorage:
 
     def download_to(self, key: str, destination: BinaryIO) -> None:
         client, blob = self._blob(key)
-        from google.api_core.exceptions import NotFound
         try:
-            blob.download_to_file(destination, timeout=60)
+            blob.download_to_file(destination,
+                timeout=(5, 30),  # Connection timeout, read timeout
+                retry=DEFAULT_RETRY.with_timeout(90),
+            )
         except NotFound as error:
             raise FileNotFoundError(key) from error
         finally:
@@ -44,7 +51,6 @@ class GCSStorage:
 
     def delete(self, key: str) -> None:
         client, blob = self._blob(key)
-        from google.api_core.exceptions import NotFound
         try:
             blob.reload(timeout=60)
             blob.delete(if_generation_match=blob.generation, timeout=60)

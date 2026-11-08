@@ -59,6 +59,12 @@ def _overlap(previous: str, following: str, count_tokens: Callable[[str], int],
         suffix = suffix[max(1, len(suffix) // 2):]
     return ""
 
+def count_tokens(text: str, tokenizer) -> int:
+    return len(tokenizer.encode(
+        text,
+        add_special_tokens=False,
+        truncation=False,
+    ))
 
 def split_by_tokens(text: str, count_tokens: Callable[[str], int], max_tokens: int,
                     overlap_tokens: int = 0) -> list[str]:

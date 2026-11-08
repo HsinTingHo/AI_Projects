@@ -23,6 +23,7 @@ async def upload_report(
     report_id = str(uuid.uuid4())
     metadata = extract_report_metadata(file)
     metadata["id"] = report_id
+    metadata["status"] = "queued"
     name = sanitize_report_name(str(metadata["report_year"] or ""), metadata["filename"])
     key = f"reports/{report_id}/{name}.pdf"
     await file.seek(0)
@@ -40,6 +41,7 @@ async def upload_report(
                 print(f"[upload.service] report_id={report_id} Metadata attempt {attempt + 1}/{METADATA_ATTEMPTS}", flush=True)
                 result = await repository.save_report_metadata(metadata, key)
                 print(f"[upload.service] report_id={report_id} Metadata committed", flush=True)
+
                 return result
             except (psycopg.errors.SerializationFailure, psycopg.errors.DeadlockDetected):
                 print(f"[upload.service] report_id={report_id} Transaction conflict", flush=True)
